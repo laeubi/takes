@@ -117,9 +117,7 @@ public final class RqMtBase implements RqMultipart {
     public RqMtBase(final Request req) throws IOException {
         this.origin = req;
         this.stream = new RqLengthAware(req).body();
-        this.buffer = ByteBuffer.allocate(
-            Math.min(8192, this.stream.available())
-        );
+        this.buffer = ByteBuffer.allocate(8192);
         this.map = this.requests(req);
     }
 

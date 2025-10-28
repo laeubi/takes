@@ -96,16 +96,20 @@ public final class BkBasic implements Back {
             )
         ) {
             while (true) {
-                this.print(
-                    BkBasic.addSocketHeaders(
-                        new RqLive(input),
-                        socket
-                    ),
-                    output
-                );
-                output.flush();
-                if (input.available() <= 0) {
-                    break;
+                try {
+                    this.print(
+                        BkBasic.addSocketHeaders(
+                            new RqLive(input),
+                            socket
+                        ),
+                        output
+                    );
+                    output.flush();
+                } catch (final IOException ex) {
+                    if ("empty request".equals(ex.getMessage())) {
+                        break;
+                    }
+                    throw ex;
                 }
             }
         }

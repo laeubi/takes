@@ -65,8 +65,12 @@ public final class CcCompact implements Codec {
             )
         ) {
             final String urn = stream.readUTF();
-            while (stream.available() > 0) {
-                map.put(stream.readUTF(), stream.readUTF());
+            try {
+                while (true) {
+                    map.put(stream.readUTF(), stream.readUTF());
+                }
+            } catch (final java.io.EOFException ex) {
+                // End of stream reached, this is expected
             }
             return new Identity.Simple(urn, map);
         } catch (final IOException ex) {

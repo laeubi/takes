@@ -5,6 +5,7 @@
 package org.takes.rs;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -81,9 +82,18 @@ interface RsBody extends Input {
 
         @Override
         public int length() throws IOException {
+            int total = 0;
             try (InputStream input = this.source.openStream()) {
-                return input.available();
+                final byte[] buffer = new byte[8192];
+                while (true) {
+                    final int read = input.read(buffer);
+                    if (read < 0) {
+                        break;
+                    }
+                    total += read;
+                }
             }
+            return total;
         }
     }
 
@@ -134,17 +144,26 @@ interface RsBody extends Input {
         private final AtomicInteger length;
 
         /**
+         * Buffer to store read data.
+         */
+        private byte[] buffer;
+
+        /**
          * Constructs an {@code Stream} with the specified {@link InputStream}.
          * @param input The content of the body as stream.
          */
         Stream(final InputStream input) {
             this.input = input;
             this.length = new AtomicInteger(-1);
+            this.buffer = null;
         }
 
         @Override
         public InputStream stream() throws IOException {
             this.estimate();
+            if (this.buffer != null) {
+                return new ByteArrayInputStream(this.buffer);
+            }
             return this.input;
         }
 
@@ -160,7 +179,19 @@ interface RsBody extends Input {
          */
         private void estimate() throws IOException {
             if (this.length.get() == -1) {
-                this.length.compareAndSet(-1, this.input.available());
+                final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                final byte[] temp = new byte[8192];
+                int total = 0;
+                while (true) {
+                    final int read = this.input.read(temp);
+                    if (read < 0) {
+                        break;
+                    }
+                    baos.write(temp, 0, read);
+                    total += read;
+                }
+                this.buffer = baos.toByteArray();
+                this.length.compareAndSet(-1, total);
             }
         }
     }

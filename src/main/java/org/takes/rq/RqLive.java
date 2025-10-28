@@ -167,8 +167,6 @@ public final class RqLive extends RqWrap {
         final Opt<Integer> ret;
         if (data.has()) {
             ret = data;
-        } else if (available && input.available() <= 0) {
-            ret = new Opt.Single<>(-1);
         } else {
             ret = new Opt.Single<>(input.read());
         }

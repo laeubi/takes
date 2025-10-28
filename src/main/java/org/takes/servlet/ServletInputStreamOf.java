@@ -55,16 +55,24 @@ public final class ServletInputStreamOf extends ServletInputStream {
 
     @Override
     public boolean isFinished() {
-        final boolean finished;
         try {
-            finished = this.available() == 0;
+            // Mark the current position if supported
+            if (this.source.markSupported()) {
+                this.source.mark(1);
+                final int next = this.source.read();
+                this.source.reset();
+                return next == -1;
+            }
+            // If mark is not supported, we cannot reliably determine
+            // if the stream is finished without consuming data.
+            // Return false to allow read() to determine EOF.
+            return false;
         } catch (final IOException ex) {
             throw new IllegalStateException(
-                "Failed to check the available() status of the stream",
+                "Failed to check if stream is finished",
                 ex
             );
         }
-        return finished;
     }
 
     @Override
